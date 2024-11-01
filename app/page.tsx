@@ -1,101 +1,307 @@
-import Image from "next/image";
+"use client"
+
+import { useState } from "react";
+import { getRandomCharacter } from "./lib/helpers";
+
+
+
+export type WordsHistoryType = {
+  player: "A" | "B",
+  word: string;
+}[]
+export const INITIAL_SCORE = 100;
+
+export type GameStateType = {
+  isFirstTurn: boolean;
+  isFinished: boolean;
+  currentPlayerTurn: "A" | "B";
+  currentCharacter: string;
+  scores: {
+    PlayerA: number;
+    PlayerB: number;
+  };
+}
+
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  const [playerAInput, setPlayerAInput] = useState("");
+  const [playerBInput, setPlayerBInput] = useState("");
+  const [wordsHistory, setWordsHistory] = useState<WordsHistoryType>([]);
+  const [errorField, setErrorField] = useState({
+    playerAError: "",
+    playerBError: ""
+  });
+  // const [placeHolderWord, setPlaceHolderWord] = useState(getRandomCharacter());
+
+
+  // useEffect(() => {
+  //   console.log("Player A >>", playerAInput)
+  //   console.log("Player B >>", playerBInput)
+  // }, [playerAInput, playerBInput])
+
+  const [gameState, setGameState] = useState<GameStateType>({
+    isFirstTurn: true,
+    isFinished: false,
+    currentPlayerTurn: "A",
+    currentCharacter: getRandomCharacter(),
+    scores: {
+      PlayerA: INITIAL_SCORE,
+      PlayerB: INITIAL_SCORE
+    }
+  })
+
+
+
+  const handlePlayerAInput = () => {
+    setErrorField({
+      playerAError: "",
+      playerBError: ""
+    })
+    console.log("player A", playerAInput);
+    if (gameState.currentPlayerTurn === "A") {
+      // validate the input length
+      if (playerAInput.trim().length < 4) {
+        setErrorField((prev) => {
+          return {
+            ...prev,
+            playerAError: "Word must be more than 4 characters!"
+          }
+        });
+        return;
+      }
+      // check if the word starts with the target word
+      if (!playerAInput.toLocaleLowerCase().startsWith(gameState.currentCharacter.toLocaleLowerCase())) {
+        setErrorField((prev) => {
+          return {
+            ...prev,
+            playerAError: `Word must the start with "${gameState.currentCharacter}"`
+          }
+        });
+
+        return;
+      }
+
+      //  check if already used or not
+      const matchFound = wordsHistory.find((word) => {
+        if (word.player === "A" && word.word === playerAInput.toLocaleLowerCase().trim()) {
+          return word
+        }
+      })
+
+      if (matchFound) {
+        // setErrorField("Word already used!! Try different word")
+        setErrorField((prev) => {
+          return {
+            ...prev,
+            playerAError: "Word already used!! Try different word"
+          }
+        });
+        return;
+      }
+
+      // validate the input through API
+      const validWord = true
+      if (!validWord) {
+        setErrorField((prev) => {
+          return {
+            ...prev,
+            playerAError: "Invalid word!! Try different one"
+          }
+        });
+
+        return;
+      }
+
+      // if valid then save the history
+      setWordsHistory((prev) => [...prev, {
+        player: "A", word: playerAInput
+      }])
+
+
+      // set currentWord for  next player 
+      setGameState((prev) => {
+        return {
+          ...prev,
+          isFirstTurn: false,
+          currentCharacter: playerAInput.slice(- 1)
+        }
+      })
+      setPlayerAInput("")
+
+    }
+    // -------------------------------------
+    else {
+      // validate the input length
+      if (playerBInput.trim().length < 4) {
+        setErrorField((prev) => {
+          return {
+            ...prev,
+            playerAError: "Word must be more than 4 characters!"
+          }
+        });
+        return;
+      }
+      // check if the word starts with the target word
+      if (!playerBInput.toLocaleLowerCase().startsWith(gameState.currentCharacter.toLocaleLowerCase())) {
+        setErrorField((prev) => {
+          return {
+            ...prev,
+            playerBError: `Word must the start with "${gameState.currentCharacter}"`
+          }
+        });
+
+        return;
+      }
+
+      //  check if already used or not
+      const matchFound = wordsHistory.find((word) => {
+        if (word.player === "B" && word.word === playerBInput.toLocaleLowerCase().trim()) {
+          return word
+        }
+      })
+
+      if (matchFound) {
+        // setErrorField("Word already used!! Try different word")
+        setErrorField((prev) => {
+          return {
+            ...prev,
+            playerBError: "Word already used!! Try different word"
+          }
+        });
+        return;
+      }
+
+      // validate the input through API
+      const validWord = true
+      if (!validWord) {
+        setErrorField((prev) => {
+          return {
+            ...prev,
+            playerBError: "Invalid word!! Try different one"
+          }
+        });
+
+        return;
+      }
+
+      // if valid then save the history
+      setWordsHistory((prev) => [...prev, {
+        player: "B", word: playerAInput
+      }])
+
+
+      // set currentWord for  next player and other states
+      setGameState((prev) => {
+        return {
+          ...prev,
+          isFirstTurn: false,
+          currentPlayerTurn: "A",
+          currentCharacter: playerAInput.slice(- 1)
+        }
+      })
+      setPlayerAInput("")
+
+    }
+  }
+
+  // const handlePlayerBInput = (e) => {
+  //   setPlayerBInput(e.target.value)
+  // }
+
+  return (
+    <div className="min-h-screen">
+      <h1 className="text-2xl text-center mt-10"> Welcome to Shiritori Game </h1>
+
+
+      {/* players boxes */}
+      <div className="mt-5 mx-auto max-w-screen-lg">
+        <div className="grid grid-cols-2 justify-center items-center gap-20 mx-auto">
+          <div className="border border-black min-h-56 p-3 rounded-lg">
+            <div className="flex justify-between items-center border-0 border-b">
+              <h4 className="text-2xl font-bold pb-3">Player A</h4>
+              <h4 className="text-xl font-semibold">Score: {gameState.scores.PlayerA}</h4>
+            </div>
+            <br />
+            {/* <p className="text-xl font-semibold">Text Starts With : {gameState.currentCharacter.toLocaleUpperCase()}</p> */}
+            <p className="text-xl font-semibold">{gameState.currentPlayerTurn === "A" ? gameState.currentCharacter.toLocaleUpperCase() : "__"}</p>
+            <input
+              type="text"
+              name="playerAInput"
+              id="player-1"
+              placeholder="Enter Word"
+              className={`border-[#e5eaf2] border rounded-md outline-none px-4 w-full mt-1 py-3 focus:border-[#3B9DF8] transition-colors duration-300 ${errorField.playerAError ? "border-red-900" : "border-[#e5eaf2]"}`}
+              value={playerAInput}
+              onChange={(e) => setPlayerAInput(e.target.value)}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            {
+              errorField && <p className="text-red-900">{errorField.playerAError}</p>
+            }
+            <button
+              className="px-6 py-1 mt-2 border border-[#3B9DF8] hover:bg-[#3B9DF8] text-[#3B9DF8] 
+hover:text-[#ffffff]  transition duration-300 rounded "
+              onClick={handlePlayerAInput}
+            >
+              Enter &gt;&gt;
+            </button>
+            <div className="bg-slate-300 mt-2 rounded-md border border-black/50 max-h-[320px] h-full overflow-scroll min-h-[200px]">
+              {
+                wordsHistory.filter((data => data.player === "A")).map((data, index) => (
+                  <p className="bg-slate-50 p-2 border-b border-b-slate-600" key={index}>
+                    {data.word}
+                  </p>
+                ))
+              }
+            </div>
+          </div>
+          <div className="border border-black min-h-56 p-3 rounded-lg">
+            <div className="flex justify-between items-center border-0 border-b">
+              <h4 className="text-2xl font-bold pb-3">Player B</h4>
+              <h4 className="text-xl font-semibold">Score: {gameState.scores.PlayerB}</h4>
+            </div>
+            <br />
+            <p className="text-xl font-semibold">Text Starts With : {gameState.currentPlayerTurn === "B" ? gameState.currentCharacter.toLocaleUpperCase() : "__"}</p>
+            <input
+              type="text"
+              name="playerAInput"
+              id="player-1"
+              placeholder="Enter Word"
+              className={`border-[#e5eaf2] border rounded-md outline-none px-4 w-full mt-1 py-3 focus:border-[#3B9DF8] transition-colors duration-300 ${errorField.playerBError ? "border-red-900" : "border-[#e5eaf2]"}`}
+              value={playerBInput}
+              onChange={(e) => setPlayerBInput(e.target.value)}
+            />
+            {
+              errorField && <p className="text-red-900">{errorField.playerBError}</p>
+            }
+            <button
+              className="px-6 py-1 mt-2 border border-[#3B9DF8] hover:bg-[#3B9DF8] text-[#3B9DF8] 
+hover:text-[#ffffff]  transition duration-300 rounded "
+              onClick={handlePlayerAInput}
+            >
+              Enter &gt;&gt;
+            </button>
+            <div className="bg-slate-300 mt-2 rounded-md border border-black/50 max-h-[320px] h-full overflow-scroll min-h-[200px]">
+              {
+                wordsHistory.filter((data => data.player === "B")).map((data, index) => (
+                  <p className="bg-slate-50 p-2 border-b border-b-slate-600" key={index}>
+                    {data.word}
+                  </p>
+                ))
+              }
+            </div>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
     </div>
   );
 }
+
+
+
+
+
+// export function getRandomCharacter() {
+//   const wordStets = "abcdefghijklmnopqrstuvwxyz";
+
+//   return wordStets[Math.round(Math.random() * wordStets.length)];
+// }
